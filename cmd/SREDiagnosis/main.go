@@ -151,6 +151,15 @@ func PtyRun(c *exec.Cmd, tty *os.File) (err error) {
 	return c.Start()
 }
 
+func BasicSysInfo() []byte {
+	out, err := exec.Command("/bin/bash", "-c", "uname -a && uptime && cd /etc/ &&  ls -p /etc/ | grep -v / | grep release | xargs cat").Output()
+	if err != nil {
+		fmt.Println("error : ", err.Error())
+		return []byte{}
+	}
+	return out
+}
+
 func handleChannels(chans <-chan ssh.NewChannel) {
 	// Service the incoming Channel channel.
 	for newChannel := range chans {
@@ -167,7 +176,8 @@ func handleChannels(chans <-chan ssh.NewChannel) {
 			log.Printf("could not accept channel (%s)", err)
 			continue
 		}
-
+		channel.Write([]byte("SRE 服务器诊断工具:\n"))
+		channel.Write(BasicSysInfo())
 		// allocate a terminal for this channel
 		log.Print("creating pty...")
 		// Create new pty
